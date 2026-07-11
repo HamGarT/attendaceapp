@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FlashlightOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,6 +34,8 @@ fun ScannerScreen(viewModel: ScannerViewModel = ScannerViewModel()) {
 
     val uiState by viewModel.uiState.collectAsState()
     var scannedOnce by remember { mutableStateOf(false) }
+    // ✨ NUEVO: Controla el reinicio de la cámara
+    var scanSessionId by remember { mutableStateOf(0) }
 
     Column(
         modifier = Modifier
@@ -94,35 +97,101 @@ fun ScannerScreen(viewModel: ScannerViewModel = ScannerViewModel()) {
             }
         }
 
-        if (uiState.successMessage != null) {
+        uiState.scannedData?.let { response ->
+            val student = response.student
+
             Spacer(modifier = Modifier.height(16.dp))
-            Row(
+            Card(
+                colors = CardDefaults.cardColors(containerColor = darkCardColor),
+                shape = RoundedCornerShape(20.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.Green.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
+                    .padding(horizontal = 16.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Éxito",
-                    tint = Color.Green,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "✓ ${uiState.successMessage}",
-                    fontSize = 14.sp,
-                    color = Color.Green,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Título de Éxito
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Éxito",
+                            tint = neonGreen,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "¡Registro Exitoso!",
+                            color = neonGreen,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
 
-            LaunchedEffect(uiState.successMessage) {
-                delay(3000)
-                viewModel.clearMessages()
-                scannedOnce = false
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Datos del Alumno
+                    if (student != null) {
+                        Text(
+                            text = "${student.nombres} ${student.apellidos}",
+                            color = Color.White,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "DNI: ${student.dni}",
+                            color = Color.Gray,
+                            fontSize = 16.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Etiqueta (Badge) de INGRESO o SALIDA
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = neonGreen.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .border(1.dp, neonGreen, RoundedCornerShape(8.dp))
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = response.tipo ?: "INGRESO",
+                                color = neonGreen,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Botón para resetear (invertimos colores para resaltarlo)
+                    Button(
+                        onClick = {
+                            viewModel.clearMessages()
+                            scannedOnce = false // Apaga el "escudo" y activa la cámara
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = neonGreen,
+                            contentColor = darkCardColor
+                        ),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        Text(
+                            text = "Escanear siguiente alumno",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
             }
         }
 
@@ -166,25 +235,28 @@ fun ScannerScreen(viewModel: ScannerViewModel = ScannerViewModel()) {
                 .border(4.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(32.dp)),
             contentAlignment = Alignment.Center
         ) {
-
+            // ✨ SIN EL BLOQUE KEY, DIRECTO AL ESCÁNER
             ScannerWithPermissions(
                 modifier = Modifier.fillMaxSize(),
                 onScanned = { qrResult ->
                     if (!scannedOnce && !uiState.isLoading) {
-                        scannedOnce = true
+                        scannedOnce = true // Activamos el escudo
                         try {
                             val studentId = qrResult.toIntOrNull()
                             if (studentId != null) {
                                 println("¡Alumno escaneado!: $studentId")
                                 viewModel.registerAttendance(studentId)
                             } else {
-                                println("Error: El código QR no contiene un ID válido: $qrResult")
+                                viewModel.showError("QR Inválido: Por favor escanea el ID del alumno.")
                             }
                         } catch (e: Exception) {
-                            println("Error al procesar código QR: ${e.message}")
+                            viewModel.showError("Error de lectura: Código corrupto.")
                         }
                     }
-                    true
+
+                    // ✨ LA SOLUCIÓN DEFINITIVA: Devolver false
+                    // Esto le dice a la cámara que NUNCA se apague ni se congele
+                    false
                 },
                 types = listOf(CodeType.QR),
                 cameraPosition = org.publicvalue.multiplatform.qrcode.CameraPosition.BACK,
@@ -199,7 +271,6 @@ fun ScannerScreen(viewModel: ScannerViewModel = ScannerViewModel()) {
                     }
                 }
             )
-
         }
 
         Spacer(modifier = Modifier.weight(1f))

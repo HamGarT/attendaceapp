@@ -16,3 +16,13 @@ data class Student(
     val dni: String,
     val sectionId: Int? = null
 )
+
+
+@Serializable
+data class AttendanceHistoryResponse(
+    val id: Int,
+    val studentId: Int,
+    val tipo: String
+    // No necesitamos poner "fecha" ni "registeredBy" si tu JSON
+    // está configurado para ignorar llaves desconocidas (ignoreUnknownKeys = true)
+)

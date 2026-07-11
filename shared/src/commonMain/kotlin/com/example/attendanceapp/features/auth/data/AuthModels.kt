@@ -1,6 +1,7 @@
 package com.example.attendanceapp.features.auth.data
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
 @Serializable
 data class LoginRequest(
@@ -13,7 +14,8 @@ data class LoginRequest(
 data class LoginResponse(
     val token: String? = null,
     val user: UserInfo? = null,
-    val rememberToken: String? = null
+    @JsonNames("rememberToken", "refreshToken", "refresh_token", "remember_token")
+    val refreshToken: String? = null
 )
 
 @Serializable

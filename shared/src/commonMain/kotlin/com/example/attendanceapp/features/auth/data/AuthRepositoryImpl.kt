@@ -12,7 +12,7 @@ class AuthRepositoryImpl(
         return try {
             val response = authService.login(email, password, rememberMe)
             if (response.token != null && response.user != null) {
-                TokenHolder.saveTokens(response.token, response.rememberToken)
+                TokenHolder.saveTokens(response.token, response.refreshToken)
 
                 val user = User(
                     id = response.user.id ?: 0,

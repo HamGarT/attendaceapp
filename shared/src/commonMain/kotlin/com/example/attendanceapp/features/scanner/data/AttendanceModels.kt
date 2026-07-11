@@ -9,11 +9,20 @@ data class AttendanceRequest(
     val observacion: String = "Llegó a tiempo"
 )
 
+// ✨ AHORA ATRAPAMOS LOS DATOS DEL ALUMNO
+@Serializable
+data class StudentData(
+    val nombres: String,
+    val apellidos: String,
+    val dni: String
+)
+
 @Serializable
 data class AttendanceResponse(
     val id: Int? = null,
-    val message: String? = null,
-    val success: Boolean? = null,
-    val error: String? = null
+    val tipo: String? = null,           // "INGRESO" o "SALIDA"
+    val fecha: String? = null,          // Hora de registro
+    val student: StudentData? = null,   // Los datos del alumno
+    val error: String? = null,
+    val message: String? = null
 )
-

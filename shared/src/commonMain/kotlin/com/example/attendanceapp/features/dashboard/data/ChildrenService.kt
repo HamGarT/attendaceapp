@@ -24,4 +24,25 @@ class ChildrenService {
             emptyList()
         }
     }
+
+    suspend fun getChildAttendance(studentId: Int): AttendanceData? {
+        return try {
+            println("ChildrenService: Fetching attendance for student $studentId")
+
+            // 1. Pedimos la lista usando el nuevo modelo que tiene "id"
+            val result = client.authGet<List<AttendanceHistoryResponse>>("$BASE_URL/me/children/$studentId/attendance")
+
+            // 2. Tomamos el primero (el más reciente de hoy) y lo mapeamos a AttendanceData
+            result.firstOrNull()?.let { historyRecord ->
+                AttendanceData(
+                    studentId = historyRecord.studentId,
+                    attendanceId = historyRecord.id, // Transformamos "id" en "attendanceId"
+                    tipo = historyRecord.tipo
+                )
+            }
+        } catch (e: Exception) {
+            println("ChildrenService ERROR (Attendance): ${e.message}")
+            null
+        }
+    }
 }

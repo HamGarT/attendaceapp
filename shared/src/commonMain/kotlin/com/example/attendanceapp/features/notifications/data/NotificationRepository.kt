@@ -36,19 +36,26 @@ object NotificationRepository {
         }
     }
 
-    fun markAsRead(id: Int) {
-        val current = _notifications.value.toMutableList()
-        val index = current.indexOfFirst { it.id == id }
-        if (index != -1) {
-            val updated = current[index].copy(readAt = "read")
-            current[index] = updated
-            _notifications.value = current
+    suspend fun markAsRead(id: Int) {
+        val success = notificationsService.markAsRead(id)
+        if (success) {
+            val current = _notifications.value.toMutableList()
+            val index = current.indexOfFirst { it.id == id }
+            if (index != -1) {
+                // Le ponemos un valor ficticio o la fecha real para que deje de ser "unread"
+                val updated = current[index].copy(readAt = "read")
+                current[index] = updated
+                _notifications.value = current
+            }
         }
     }
 
-    fun markAllAsRead() {
-        val current = _notifications.value.map { it.copy(readAt = "read") }
-        _notifications.value = current
+    suspend fun markAllAsRead() {
+        val success = notificationsService.markAllAsRead()
+        if (success) {
+            val current = _notifications.value.map { it.copy(readAt = "read") }
+            _notifications.value = current
+        }
     }
 
     fun getUnreadCount(): Int {

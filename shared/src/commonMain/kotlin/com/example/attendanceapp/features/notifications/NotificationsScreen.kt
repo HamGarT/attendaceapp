@@ -165,6 +165,7 @@ private fun FilterChipsSection() {
     }
 }
 
+
 @Composable
 private fun NotificationItemCard(notification: NotificationItem, onClick: () -> Unit) {
     val darkText = Color(0xFF1E231C)
@@ -177,14 +178,19 @@ private fun NotificationItemCard(notification: NotificationItem, onClick: () -> 
         else -> Icons.Default.Info
     }
 
+    // 1. Añadimos forma, sombra y márgenes externos para separar las tarjetas
     Surface(
         color = if (notification.isUnread) Color(0xFFF0FDF4) else Color.White,
-        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        shadowElevation = 2.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 6.dp), // Separación entre tarjetas
         onClick = onClick
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.Top
+            modifier = Modifier.padding(16.dp), // Espaciado interno para que respire
+            verticalAlignment = Alignment.CenterVertically // Centramos el ícono con el texto
         ) {
             Surface(
                 color = iconBgColor,
@@ -205,26 +211,34 @@ private fun NotificationItemCard(notification: NotificationItem, onClick: () -> 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Top
                 ) {
+                    // 2. El título ahora tiene weight(1f) para no empujar a la fecha
                     Text(
                         text = notification.title,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = darkText
+                        color = darkText,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // 3. Agrupamos la fecha y el punto de "no leído" a la derecha
+                    Column(horizontalAlignment = Alignment.End) {
                         Text(
                             text = formatTimeAgo(notification.createdAt),
                             fontSize = 12.sp,
-                            color = Color.Gray
+                            color = Color.Gray,
+                            fontWeight = FontWeight.Medium
                         )
                         if (notification.isUnread) {
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Box(
                                 modifier = Modifier
-                                    .size(6.dp)
+                                    .size(8.dp)
                                     .clip(CircleShape)
                                     .background(MaterialTheme.colorScheme.primary)
                             )
@@ -247,12 +261,16 @@ private fun NotificationItemCard(notification: NotificationItem, onClick: () -> 
     }
 }
 
+// 4. Formateamos la fecha para que sea cortita y elegante
 private fun formatTimeAgo(isoDate: String): String {
     return try {
-        val date = isoDate.substringBefore("T")
-        val time = isoDate.substringAfter("T").substringBefore(".")
-        "$date $time"
+        // Ejemplo de isoDate: "2026-07-11T13:17:54.000Z"
+        val time = isoDate.substringAfter("T").substring(0, 5) // Saca "13:17"
+        val dateParts = isoDate.substringBefore("T").split("-")
+        val month = dateParts[1]
+        val day = dateParts[2]
+        "$day/$month $time" // Resultado final: "11/07 13:17"
     } catch (e: Exception) {
-        isoDate
+        isoDate.take(10) // Si falla, solo muestra la fecha base
     }
 }

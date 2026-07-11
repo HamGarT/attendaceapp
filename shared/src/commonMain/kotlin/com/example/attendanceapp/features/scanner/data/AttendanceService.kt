@@ -45,7 +45,6 @@ class AttendanceService {
             response.body<AttendanceResponse>()
         } catch (e: Exception) {
             AttendanceResponse(
-                success = false,
                 error = e.message ?: "Error al registrar asistencia"
             )
         }

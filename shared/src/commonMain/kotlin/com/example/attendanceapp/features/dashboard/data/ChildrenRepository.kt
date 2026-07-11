@@ -11,4 +11,8 @@ class ChildrenRepository(
             Result.failure(e)
         }
     }
+
+    suspend fun getChildAttendance(studentId: Int): AttendanceData? {
+        return childrenService.getChildAttendance(studentId)
+    }
 }

@@ -3,6 +3,7 @@ package com.example.attendanceapp.features.scanner.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.attendanceapp.features.scanner.data.AttendanceRepositoryImpl
+import com.example.attendanceapp.features.scanner.data.AttendanceResponse
 import com.example.attendanceapp.features.scanner.domain.AttendanceRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +12,7 @@ import kotlinx.coroutines.launch
 
 data class ScannerUiState(
     val isLoading: Boolean = false,
-    val successMessage: String? = null,
+    val scannedData: AttendanceResponse? = null,
     val errorMessage: String? = null,
     val lastScannedId: Int? = null
 )
@@ -28,36 +29,42 @@ class ScannerViewModel(
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 errorMessage = null,
-                successMessage = null,
+                scannedData = null,
                 lastScannedId = studentId
             )
 
             val result = attendanceRepository.registerAttendance(studentId)
 
-            result.onSuccess { message ->
+            result.onSuccess { responseData ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    successMessage = message,
+                    scannedData = responseData, // ✨ Guardamos los datos reales aquí
                     errorMessage = null
                 )
-                println("Scanner: Asistencia registrada - Estudiante $studentId")
             }
 
             result.onFailure { exception ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = exception.message ?: "Error desconocido",
-                    successMessage = null
+                    scannedData = null
                 )
-                println("Scanner: Error al registrar asistencia - ${exception.message}")
             }
         }
     }
 
     fun clearMessages() {
         _uiState.value = _uiState.value.copy(
-            successMessage = null,
+            scannedData = null, // ✨ Limpiamos los datos para escanear de nuevo
             errorMessage = null
+        )
+    }
+
+    fun showError(message: String) {
+        _uiState.value = _uiState.value.copy(
+            isLoading = false,
+            errorMessage = message,
+            scannedData = null
         )
     }
 }

@@ -35,9 +35,13 @@ object TokenHolder {
 
     fun saveTokens(access: String, refresh: String?) {
         token = access
-        refreshToken = refresh
         AppContext.storage?.save(KEY_ACCESS_TOKEN, access)
-        refresh?.let { AppContext.storage?.save(KEY_REFRESH_TOKEN, it) }
+
+        if (refresh != null) {
+            refreshToken = refresh
+            AppContext.storage?.save(KEY_REFRESH_TOKEN, refresh)
+        }
+
         _sessionActive.value = hasValidSession()
     }
 
@@ -75,7 +79,7 @@ object TokenHolder {
     }
 
     fun hasValidSession(): Boolean {
-        return !token.isNullOrBlank() && !refreshToken.isNullOrBlank()
+        return !token.isNullOrBlank()
     }
 
     fun getBearerToken(): String? = token?.let { "Bearer $it" }

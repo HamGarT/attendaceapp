@@ -1,5 +1,6 @@
 package com.example.attendanceapp.core.network
 
+import com.example.attendanceapp.core.BuildConfig
 import com.example.attendanceapp.features.auth.data.LoginResponse
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -18,7 +19,7 @@ private data class RefreshRequest(
 
 object RefreshTokenService {
 
-    private const val BASE_URL = "https://3819-181-64-57-110.ngrok-free.app/api"
+    private const val BASE_URL = BuildConfig.API_URL
 
     private val client = createPlatformHttpClient().config {
         install(ContentNegotiation) {
@@ -48,16 +49,19 @@ object RefreshTokenService {
             if (response.status.value == 200) {
                 val body = response.body<LoginResponse>()
                 if (body.token != null) {
-                    TokenHolder.saveTokens(body.token, body.rememberToken ?: currentRefreshToken)
+                    TokenHolder.saveTokens(body.token, body.refreshToken ?: currentRefreshToken)
                     println("RefreshTokenService: Token refreshed successfully")
                     true
                 } else {
                     println("RefreshTokenService: No token in response")
                     false
                 }
-            } else {
-                println("RefreshTokenService: Failed with status ${response.status}")
+            } else if (response.status.value == 401) {
+                println("RefreshTokenService: Refresh token invalid (401), clearing session")
                 TokenHolder.clear()
+                false
+            } else {
+                println("RefreshTokenService: Server error ${response.status}, keeping session")
                 false
             }
         } catch (e: Exception) {

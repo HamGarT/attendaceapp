@@ -40,12 +40,17 @@ class NotificationsViewModel(
     }
 
     fun markAsRead(id: Int) {
-        NotificationRepository.markAsRead(id)
-        _unreadCount.value = NotificationRepository.getUnreadCount()
+        viewModelScope.launch {
+            NotificationRepository.markAsRead(id)
+            // Actualizamos el contador después de que se guardó en BD
+            _unreadCount.value = NotificationRepository.getUnreadCount()
+        }
     }
 
     fun markAllAsRead() {
-        NotificationRepository.markAllAsRead()
-        _unreadCount.value = 0
+        viewModelScope.launch {
+            NotificationRepository.markAllAsRead()
+            _unreadCount.value = 0
+        }
     }
 }

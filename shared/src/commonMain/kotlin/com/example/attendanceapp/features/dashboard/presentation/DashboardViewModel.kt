@@ -37,11 +37,16 @@ class DashboardViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             println("DashboardViewModel: fetchChildren called")
+
             val result = childrenRepository.getChildren()
             result.fold(
                 onSuccess = { children ->
                     println("DashboardViewModel: got ${children.size} children")
                     _children.value = children
+
+                    // NUEVO: Buscar la asistencia inicial de cada hijo
+                    fetchInitialAttendance(children)
+
                     _error.value = null
                 },
                 onFailure = { e ->
@@ -51,6 +56,22 @@ class DashboardViewModel(
             )
             _isLoading.value = false
         }
+    }
+
+    private suspend fun fetchInitialAttendance(children: List<ParentChild>) {
+        val initialMap = mutableMapOf<Int, AttendanceData>()
+
+        children.forEach { parentChild ->
+            val studentId = parentChild.student.id
+            val attendance = childrenRepository.getChildAttendance(studentId)
+
+            if (attendance != null) {
+                initialMap[studentId] = attendance
+            }
+        }
+
+        // Actualizamos la UI de golpe con los datos iniciales reales
+        _attendanceStatus.value = initialMap
     }
 
     private fun collectAttendanceUpdates() {
