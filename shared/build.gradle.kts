@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.serialization)
     id("com.github.gmazzo.buildconfig") version "6.0.10"
+    id("com.google.gms.google-services")
 }
 
 kotlin {
@@ -42,8 +43,11 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.ktor.client.okhttp)
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:34.9.0"))
+            implementation(libs.firebase.messaging.ktx)
         }
         iosMain.dependencies {
+
             implementation(libs.ktor.client.darwin)
         }
         commonMain.dependencies {
@@ -63,6 +67,7 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.websockets)
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+            implementation("dev.gitlive:firebase-messaging:2.5.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

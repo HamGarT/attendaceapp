@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.attendanceapp.features.dashboard.data.AttendanceData
 import com.example.attendanceapp.features.dashboard.data.ParentChild
+import com.example.attendanceapp.features.dashboard.data.Section
 import com.example.attendanceapp.features.dashboard.presentation.DashboardViewModel
 
 @Composable
@@ -54,7 +55,7 @@ fun ParentDashboardScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "My Children",
+            text = "Mis hijos",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1E231C),
@@ -162,7 +163,7 @@ fun ChildrenCardsRow(
                 val attendance = attendanceStatus[parentChild.student.id]
                 ChildCard(
                     name = "${parentChild.student.nombres} ${parentChild.student.apellidos}",
-                    parentesco = parentChild.parentesco,
+                    gradeAndSection =  parentChild.student.section?.grade +" Grado"+" ● "+ parentChild.student.section?.name,
                     attendance = attendance
                 )
             }
@@ -173,7 +174,7 @@ fun ChildrenCardsRow(
 @Composable
 fun ChildCard(
     name: String,
-    parentesco: String,
+    gradeAndSection:  String,
     attendance: AttendanceData?
 ) {
     val hasAttended = attendance?.tipo == "INGRESO"
@@ -199,7 +200,7 @@ fun ChildCard(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(text = name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text(text = parentesco, fontSize = 14.sp, color = Color.Gray)
+                    Text(text = gradeAndSection, fontSize = 14.sp, color = Color.Gray)
                 }
             }
 

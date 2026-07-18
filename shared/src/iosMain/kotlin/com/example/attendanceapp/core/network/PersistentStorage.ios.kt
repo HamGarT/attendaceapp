@@ -2,24 +2,27 @@ package com.example.attendanceapp.core.network
 
 import platform.Foundation.NSUserDefaults
 
+
 actual class PersistentStorage {
-    private val defaults = NSUserDefaults()
+    private val userDefaults = NSUserDefaults.standardUserDefaults
 
     actual fun save(key: String, value: String) {
-        defaults.setObject(value, key)
+        userDefaults.setObject(value, forKey = key)
     }
 
     actual fun get(key: String): String? {
-        return defaults.stringForKey(key)
+        return userDefaults.stringForKey(key)
     }
 
     actual fun remove(key: String) {
-        defaults.removeObjectForKey(key)
+        userDefaults.removeObjectForKey(key)
     }
 
     actual fun clear() {
-        defaults.removeObjectForKey("access_token")
-        defaults.removeObjectForKey("refresh_token")
+        val domain = platform.Foundation.NSBundle.mainBundle.bundleIdentifier
+        if (domain != null) {
+            userDefaults.removePersistentDomainForName(domain)
+        }
     }
 }
 

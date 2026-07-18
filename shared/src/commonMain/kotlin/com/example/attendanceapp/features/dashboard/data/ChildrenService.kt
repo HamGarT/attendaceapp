@@ -13,7 +13,6 @@ class ChildrenService {
     private val client = createAuthHttpClient()
 
     suspend fun getChildren(): List<ParentChild> {
-        println("ChildrenService: Fetching children from $BASE_URL/me/children")
         return try {
             val result = client.authGet<List<ParentChild>>("$BASE_URL/me/children")
             println("ChildrenService: Got ${result.size} children")

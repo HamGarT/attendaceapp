@@ -22,7 +22,6 @@ fun getMenuTabsForRole(role: UserRole): List<ScreenRoute> {
     return when (role) {
         UserRole.AUXILIAR -> listOf(
             ScreenRoute.Scanner,
-            ScreenRoute.Notifications,
             ScreenRoute.Profile
         )
         UserRole.PADRE -> listOf(

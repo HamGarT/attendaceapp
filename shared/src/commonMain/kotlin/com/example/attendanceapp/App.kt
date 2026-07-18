@@ -28,7 +28,9 @@ import com.example.attendanceapp.features.dashboard.presentation.DashboardViewMo
 import com.example.attendanceapp.features.notifications.NotificationsScreen
 import com.example.attendanceapp.features.notifications.presentation.NotificationsViewModel
 import com.example.attendanceapp.features.profile.ProfileScreen
+import com.example.attendanceapp.features.profile.presentation.ProfileViewModel
 import com.example.attendanceapp.features.reports.ReportsScreen
+import com.example.attendanceapp.features.reports.presentation.ReportsViewModel
 import com.example.attendanceapp.features.scanner.ScannerScreen
 import com.example.attendanceapp.features.scanner.presentation.ScannerViewModel
 
@@ -65,7 +67,7 @@ fun App() {
                     currentUser = User(
                         id = TokenHolder.userId,
                         name = TokenHolder.userName,
-                        lastname = "",
+                        lastname = TokenHolder.userLastname,
                         email = TokenHolder.userEmail,
                         role = TokenHolder.userRole
                     )
@@ -119,6 +121,14 @@ fun App() {
                 ScannerViewModel()
             }
 
+            val reportsViewModel = remember {
+                ReportsViewModel()
+            }
+
+            val profileViewModel = remember {
+                ProfileViewModel()
+            }
+
             LaunchedEffect(Unit) {
                 attendanceWebSocket.connect()
             }
@@ -143,7 +153,7 @@ fun App() {
                             userName = currentUser?.name ?: "Usuario",
                             viewModel = dashboardViewModel
                         )
-                        ScreenRoute.Reports -> ReportsScreen()
+                        ScreenRoute.Reports -> ReportsScreen(viewModel = reportsViewModel)
                         ScreenRoute.Scanner -> ScannerScreen(
                             viewModel = scannerViewModel
                         )
@@ -154,7 +164,8 @@ fun App() {
                             onSignOut = {
                                 attendanceWebSocket.disconnect()
                                 TokenHolder.clear()
-                            }
+                            },
+                            viewModel = profileViewModel
                         )
                     }
                 }

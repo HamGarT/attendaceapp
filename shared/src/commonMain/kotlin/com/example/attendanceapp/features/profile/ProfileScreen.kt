@@ -1,7 +1,5 @@
 package com.example.attendanceapp.features.profile
 
-
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -19,39 +17,53 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.attendanceapp.features.profile.presentation.ProfileViewModel
 
 @Composable
-fun ProfileScreen(onSignOut: () -> Unit = {}) {
-    val backgroundColor = Color(0xFFF7F9ED) // Fondo crema general
+fun ProfileScreen(
+    onSignOut: () -> Unit = {},
+    viewModel: ProfileViewModel
+) {
+    val backgroundColor = Color(0xFFF7F9ED)
+    val profile by viewModel.profile.collectAsState()
+    val children by viewModel.children.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    val fullName = remember(profile) {
+        val name = viewModel.userName
+        val lastname = viewModel.userLastname
+        if (lastname.isNotBlank()) "$name $lastname" else name
+    }
+
+    val email = profile?.email ?: viewModel.userEmail
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
             .verticalScroll(rememberScrollState())
-            .padding(top = 24.dp, bottom = 120.dp) // Padding extra abajo para que no lo tape la barra flotante
+            .padding(top = 24.dp, bottom = 120.dp)
     ) {
-        // 1. Título de la página
         HeaderSection()
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 2. Tarjeta de Información Personal
-        PersonalInfoCard()
+        PersonalInfoCard(
+            fullName = fullName,
+            email = email,
+            isLoading = isLoading
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 3. Tarjeta de Familia
-        FamilyCard()
+        FamilyCard(children = children)
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 4. Tarjeta de Notificaciones
         NotificationPreferencesCard()
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // 5. Botón de Cerrar Sesión
         SignOutButton(onClick = onSignOut)
     }
 }
@@ -75,7 +87,11 @@ private fun HeaderSection() {
 }
 
 @Composable
-private fun PersonalInfoCard() {
+private fun PersonalInfoCard(
+    fullName: String,
+    email: String,
+    isLoading: Boolean
+) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(24.dp),
@@ -96,31 +112,36 @@ private fun PersonalInfoCard() {
                 modifier = Modifier.padding(vertical = 16.dp)
             )
 
-            // Campos de texto
-            InfoField(label = "Full Name", value = "Sarah Jenkins")
-            Spacer(modifier = Modifier.height(16.dp))
-            InfoField(label = "Email Address", value = "sarah.j@example.com")
-            Spacer(modifier = Modifier.height(16.dp))
-            InfoField(label = "Phone Number", value = "(555) 123-4567")
-            Spacer(modifier = Modifier.height(16.dp))
-            InfoField(label = "Home Address", value = "123 Maple Street, Apt 4B")
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Botón de Editar alinado a la derecha
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                Surface(
-                    color = Color(0xFFEAECE2), // Crema oscuro
-                    shape = RoundedCornerShape(16.dp),
-                    onClick = { /* Lógica para editar */ }
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Edit Information",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = Color(0xFF1E231C),
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
-                    )
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
+            } else {
+                InfoField(label = "Full Name", value = fullName)
+                Spacer(modifier = Modifier.height(16.dp))
+                InfoField(label = "Email Address", value = email)
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                    Surface(
+                        color = Color(0xFFEAECE2),
+                        shape = RoundedCornerShape(16.dp),
+                        onClick = { }
+                    ) {
+                        Text(
+                            text = "Edit Information",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color(0xFF1E231C),
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+                        )
+                    }
                 }
             }
         }
@@ -138,7 +159,7 @@ private fun InfoField(label: String, value: String) {
             modifier = Modifier.padding(bottom = 6.dp, start = 4.dp)
         )
         Surface(
-            color = Color(0xFFF7F9ED), // Fondo crema claro del input
+            color = Color(0xFFF7F9ED),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -153,7 +174,7 @@ private fun InfoField(label: String, value: String) {
 }
 
 @Composable
-private fun FamilyCard() {
+private fun FamilyCard(children: List<com.example.attendanceapp.features.profile.data.ProfileChildWrapper>) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(24.dp),
@@ -174,10 +195,27 @@ private fun FamilyCard() {
                 modifier = Modifier.padding(vertical = 16.dp)
             )
 
-            // Lista de Hijos
-            FamilyMemberItem(name = "Leo Jenkins", details = "Grade 3 • Room 102")
-            Spacer(modifier = Modifier.height(12.dp))
-            FamilyMemberItem(name = "Maya Jenkins", details = "Grade 7 • Homeroom 3B")
+            if (children.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No children registered",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
+            } else {
+                children.forEach { parentChild ->
+                    val name = "${parentChild.student.nombres} ${parentChild.student.apellidos}"
+                    val details = parentChild.parentesco
+                    FamilyMemberItem(name = name, details = details)
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+            }
         }
     }
 }
@@ -188,7 +226,7 @@ private fun FamilyMemberItem(name: String, details: String) {
         color = Color(0xFFF7F9ED),
         shape = RoundedCornerShape(24.dp),
         modifier = Modifier.fillMaxWidth(),
-        onClick = { /* Ver detalles del hijo */ }
+        onClick = { }
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -196,7 +234,6 @@ private fun FamilyMemberItem(name: String, details: String) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Placeholder para la foto
                 Box(
                     modifier = Modifier
                         .size(48.dp)
@@ -210,7 +247,7 @@ private fun FamilyMemberItem(name: String, details: String) {
             }
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = "Ver más",
+                contentDescription = "Ver mas",
                 tint = Color.DarkGray
             )
         }
@@ -239,7 +276,6 @@ private fun NotificationPreferencesCard() {
                 modifier = Modifier.padding(vertical = 16.dp)
             )
 
-            // Toggles
             PreferenceToggle(
                 title = "Arrival Alerts",
                 description = "Alert me when my child arrives at school.",
@@ -265,10 +301,9 @@ private fun NotificationPreferencesCard() {
 private fun PreferenceToggle(title: String, description: String, initialState: Boolean) {
     var isChecked by remember { mutableStateOf(initialState) }
 
-    // Colores personalizados para el Switch basándonos en tu diseño (Olive Green)
     val switchColors = SwitchDefaults.colors(
         checkedThumbColor = Color.White,
-        checkedTrackColor = Color(0xFF4A6800), // Verde olivo oscuro
+        checkedTrackColor = Color(0xFF4A6800),
         uncheckedThumbColor = Color.White,
         uncheckedTrackColor = Color.LightGray,
         uncheckedBorderColor = Color.Transparent
@@ -302,14 +337,14 @@ private fun SignOutButton(onClick: () -> Unit = {}) {
         Button(
             onClick = onClick,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF2C3225), // Gris/Verde super oscuro
+                containerColor = Color(0xFF2C3225),
                 contentColor = Color.White
             ),
             shape = RoundedCornerShape(24.dp),
             contentPadding = PaddingValues(horizontal = 32.dp, vertical = 14.dp)
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ExitToApp, // Icono de puerta/salida
+                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp)
             )

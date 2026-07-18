@@ -11,6 +11,7 @@ object TokenHolder {
     private const val KEY_USER_EMAIL = "user_email"
     private const val KEY_USER_ROLE = "user_role"
     private const val KEY_USER_ID = "user_id"
+    private const val KEY_USER_LASTNAME = "user_lastname"
 
     var token: String? = null
         private set
@@ -22,6 +23,9 @@ object TokenHolder {
         private set
 
     var userEmail: String = ""
+        private set
+
+    var userLastname: String = ""
         private set
 
     var userRole: String = ""
@@ -45,15 +49,17 @@ object TokenHolder {
         _sessionActive.value = hasValidSession()
     }
 
-    fun saveUserInfo(id: Int, name: String, email: String, role: String) {
+    fun saveUserInfo(id: Int, name: String, email: String, role: String, lastname: String = "") {
         userId = id
         userName = name
         userEmail = email
         userRole = role
+        userLastname = lastname
         AppContext.storage?.save(KEY_USER_ID, id.toString())
         AppContext.storage?.save(KEY_USER_NAME, name)
         AppContext.storage?.save(KEY_USER_EMAIL, email)
         AppContext.storage?.save(KEY_USER_ROLE, role)
+        AppContext.storage?.save(KEY_USER_LASTNAME, lastname)
     }
 
     fun loadFromStorage() {
@@ -62,6 +68,7 @@ object TokenHolder {
         refreshToken = storage.get(KEY_REFRESH_TOKEN)
         userName = storage.get(KEY_USER_NAME) ?: ""
         userEmail = storage.get(KEY_USER_EMAIL) ?: ""
+        userLastname = storage.get(KEY_USER_LASTNAME) ?: ""
         userRole = storage.get(KEY_USER_ROLE) ?: ""
         userId = storage.get(KEY_USER_ID)?.toIntOrNull() ?: 0
         _sessionActive.value = hasValidSession()
@@ -72,6 +79,7 @@ object TokenHolder {
         refreshToken = null
         userName = ""
         userEmail = ""
+        userLastname = ""
         userRole = ""
         userId = 0
         AppContext.storage?.clear()

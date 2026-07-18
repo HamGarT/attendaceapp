@@ -7,7 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.attendanceapp.core.network.AppContext
-import com.example.attendanceapp.core.network.PersistentStorage
 import com.example.attendanceapp.core.notifications.LocalNotificationManager
 
 class MainActivity : ComponentActivity() {
@@ -15,7 +14,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        PersistentStorage.init(applicationContext)
         AppContext.init(applicationContext)
         LocalNotificationManager.init(applicationContext)
         LocalNotificationManager.bindActivity(this)

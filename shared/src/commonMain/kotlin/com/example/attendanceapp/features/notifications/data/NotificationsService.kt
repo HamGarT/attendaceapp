@@ -31,10 +31,7 @@ class NotificationsService {
 
     suspend fun markAsRead(notificationId: Int): Boolean {
         return try {
-            // Nota: Cambia authPost por authPatch si en tu archivo de rutas (router) usaste router.patch()
             val response = client.authPatch<HttpResponse>("$BASE_URL/notifications/$notificationId/read")
-
-            // Verificamos si devolvió un 200, 201 o tu glorioso 204
             response.status.value in 200..299
         } catch (e: Exception) {
             println("NotificationsService ERROR markAsRead: ${e.message}")

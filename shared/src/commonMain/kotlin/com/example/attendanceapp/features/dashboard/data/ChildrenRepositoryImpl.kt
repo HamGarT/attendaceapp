@@ -1,9 +1,12 @@
 package com.example.attendanceapp.features.dashboard.data
 
-class ChildrenRepository(
+import com.example.attendanceapp.features.dashboard.domain.ChildrenRepository
+
+class ChildrenRepositoryImpl(
     private val childrenService: ChildrenService = ChildrenService()
-) {
-    suspend fun getChildren(): Result<List<ParentChild>> {
+) : ChildrenRepository {
+
+    override suspend fun getChildren(): Result<List<ParentChild>> {
         return try {
             val children = childrenService.getChildren()
             Result.success(children)
@@ -12,7 +15,7 @@ class ChildrenRepository(
         }
     }
 
-    suspend fun getChildAttendance(studentId: Int): AttendanceData? {
+    override suspend fun getChildAttendance(studentId: Int): AttendanceData? {
         return childrenService.getChildAttendance(studentId)
     }
 }

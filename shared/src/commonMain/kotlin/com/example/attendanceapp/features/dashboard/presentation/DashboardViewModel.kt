@@ -1,10 +1,11 @@
 package com.example.attendanceapp.features.dashboard.presentation
+import com.example.attendanceapp.core.notifications.PushNotificationService
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.attendanceapp.features.dashboard.data.AttendanceData
 import com.example.attendanceapp.features.dashboard.data.AttendanceWebSocket
-import com.example.attendanceapp.features.dashboard.data.ChildrenRepository
+import com.example.attendanceapp.features.dashboard.data.ChildrenRepositoryImpl
 import com.example.attendanceapp.features.dashboard.data.ParentChild
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,8 +13,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DashboardViewModel(
-    private val childrenRepository: ChildrenRepository = ChildrenRepository(),
-    private val attendanceWebSocket: AttendanceWebSocket
+    private val childrenRepositoryImpl: ChildrenRepositoryImpl = ChildrenRepositoryImpl(),
+    private val attendanceWebSocket: AttendanceWebSocket,
+    private val pushNotificationService: PushNotificationService
 ) : ViewModel() {
 
     private val _children = MutableStateFlow<List<ParentChild>>(emptyList())
@@ -38,10 +40,10 @@ class DashboardViewModel(
             _isLoading.value = true
             println("DashboardViewModel: fetchChildren called")
 
-            val result = childrenRepository.getChildren()
+            val result = childrenRepositoryImpl.getChildren()
             result.fold(
                 onSuccess = { children ->
-                    println("DashboardViewModel: got ${children.size} children")
+
                     _children.value = children
 
                     // NUEVO: Buscar la asistencia inicial de cada hijo
@@ -63,7 +65,7 @@ class DashboardViewModel(
 
         children.forEach { parentChild ->
             val studentId = parentChild.student.id
-            val attendance = childrenRepository.getChildAttendance(studentId)
+            val attendance = childrenRepositoryImpl.getChildAttendance(studentId)
 
             if (attendance != null) {
                 initialMap[studentId] = attendance
@@ -81,6 +83,34 @@ class DashboardViewModel(
                 currentMap[attendanceData.studentId] = attendanceData
                 _attendanceStatus.value = currentMap
             }
+        }
+    }
+
+    fun registerDeviceForNotifications() {
+        viewModelScope.launch {
+            val token = pushNotificationService.getDeviceToken()
+            if (token == null) {
+                // log or update UI state: couldn't get token, maybe retry
+                return@launch
+            }
+            sendTokenToBackend(token)
+        }
+    }
+
+    /** Call once (e.g. in init {}) to keep the backend in sync when the token rotates. */
+    fun observeTokenRefresh() {
+        viewModelScope.launch {
+            MyFirebaseMessagingService.tokenFlow.collect { newToken ->
+                sendTokenToBackend(newToken)
+            }
+        }
+    }
+
+    private suspend fun sendTokenToBackend(token: String) {
+        try {
+            profileRepository.updateFcmToken(token)
+        } catch (e: Exception) {
+            // log: failed to sync FCM token, consider retry/queue
         }
     }
 }

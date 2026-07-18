@@ -42,7 +42,6 @@ object NotificationRepository {
             val current = _notifications.value.toMutableList()
             val index = current.indexOfFirst { it.id == id }
             if (index != -1) {
-                // Le ponemos un valor ficticio o la fecha real para que deje de ser "unread"
                 val updated = current[index].copy(readAt = "read")
                 current[index] = updated
                 _notifications.value = current
